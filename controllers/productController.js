@@ -2,6 +2,7 @@ const Product = require('../models/Product'); // Correct import
 const multer = require('multer');
 const Firm = require('../models/Firm');
 const path = require('path'); // Import the correct `path` module
+const { error } = require('console');
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -54,5 +55,40 @@ const addproduct = async (req, res) => {
     }
 };
 
+const getProductByFirm = async(req, res) => {
+    try {
+        const firmId = req.params.firmId;
+        const firm = await Firm.findById(firmId);
+
+        if (!firm) {
+            return res.status(404).json({ error: "No firm found" });
+        }
+
+        const restaurantName = firm.firmName;
+        const products = await Product.find({ firm: firmId });
+
+        res.status(200).json({ restaurantName, products });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" })
+    }
+}
+
+const deleteProductById = async(req, res) => {
+    try {
+        const productId = req.params.productId;
+
+        const deletedProduct = await Product.findByIdAndDelete(productId);
+
+        if (!deletedProduct) {
+            return res.status(404).json({ error: "No product found" })
+        }
+        res.status(200).json({ message: "Product deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" })
+    }
+}
+
 // Export the function with multer middleware
-module.exports = { addproduct: [upload.single('image'), addproduct] };
+module.exports = { addproduct: [upload.single('image'), addproduct], getProductByFirm,deleteProductById  };
